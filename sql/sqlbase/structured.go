@@ -1215,6 +1215,8 @@ func (k ColumnType_Kind) ToDatumType() parser.Datum {
 		return parser.TypeTimestampTZ
 	case ColumnType_INTERVAL:
 		return parser.TypeInterval
+	case ColumnType_GEOGRAPHY:
+		return parser.TypeGeography
 	}
 	return nil
 }

@@ -38,6 +38,7 @@ func (*TimestampTZColType) columnType() {}
 func (*IntervalColType) columnType()    {}
 func (*StringColType) columnType()      {}
 func (*BytesColType) columnType()       {}
+func (*GeographyColType) columnType()   {}
 
 // Pre-allocated immutable boolean column types.
 var (
@@ -198,6 +199,18 @@ func (node *IntervalColType) Format(buf *bytes.Buffer, f FmtFlags) {
 	buf.WriteString("INTERVAL")
 }
 
+// Pre-allocated immutable interval column type.
+var geographyColTypeGeography = &GeographyColType{}
+
+// GeographyColType represents a GEOGRAPHY type
+type GeographyColType struct {
+}
+
+// Format implements the NodeFormatter interface.
+func (node *GeographyColType) Format(buf *bytes.Buffer, f FmtFlags) {
+	buf.WriteString("GEOGRAPHY")
+}
+
 // Pre-allocated immutable string column types.
 var (
 	stringColTypeChar    = &StringColType{Name: "CHAR"}
@@ -247,3 +260,4 @@ func (node *TimestampTZColType) String() string { return AsString(node) }
 func (node *IntervalColType) String() string    { return AsString(node) }
 func (node *StringColType) String() string      { return AsString(node) }
 func (node *BytesColType) String() string       { return AsString(node) }
+func (node *GeographyColType) String() string   { return AsString(node) }

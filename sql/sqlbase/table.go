@@ -255,6 +255,9 @@ func MakeColumnDefDescs(d *parser.ColumnTableDef) (*ColumnDescriptor, *IndexDesc
 	case *parser.BytesColType:
 		col.Type.Kind = ColumnType_BYTES
 		colDatumType = parser.TypeBytes
+	case *parser.GeographyColType:
+		col.Type.Kind = ColumnType_GEOGRAPHY
+		colDatumType = parser.TypeGeography
 	default:
 		return nil, nil, errors.Errorf("unexpected type %T", t)
 	}
@@ -1113,6 +1116,9 @@ func CheckColumnType(col ColumnDescriptor, val parser.Datum, pmap *parser.Placeh
 	case ColumnType_INTERVAL:
 		_, ok = val.(*parser.DInterval)
 		set = parser.TypeInterval
+	case ColumnType_GEOGRAPHY:
+		_, ok = val.(*parser.DGeography)
+		set = parser.TypeGeography
 	default:
 		return errors.Errorf("unsupported column type: %s", col.Type.Kind)
 	}
@@ -1199,6 +1205,11 @@ func MarshalColumnValue(col ColumnDescriptor, val parser.Datum) (roachpb.Value, 
 			err := r.SetDuration(v.Duration)
 			return r, err
 		}
+	case ColumnType_GEOGRAPHY:
+		if v, ok := val.(*parser.DGeography); ok {
+			r.SetString(v.JSON)
+			return r, nil
+		}
 	default:
 		return r, errors.Errorf("unsupported column type: %s", col.Type.Kind)
 	}
@@ -1279,6 +1290,13 @@ func UnmarshalColumnValue(
 			return nil, err
 		}
 		return a.NewDInterval(parser.DInterval{Duration: d}), nil
+	case ColumnType_GEOGRAPHY:
+		v, err := value.GetBytes()
+		if err != nil {
+			return nil, err
+		}
+		// TODO(mjibson): don't force the parsing here; do some lazy-loading
+		return parser.ParseDGeography(string(v))
 	default:
 		return nil, errors.Errorf("unsupported column type: %s", kind)
 	}

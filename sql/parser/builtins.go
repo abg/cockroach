@@ -705,6 +705,48 @@ var Builtins = map[string][]Builtin{
 		},
 	},
 
+	// Geography functions.
+
+	"st_asgeojson": {
+		Builtin{
+			Types:      ArgTypes{TypeGeography},
+			ReturnType: TypeString,
+			fn: func(ctx *EvalContext, args DTuple) (Datum, error) {
+				g := args[0].(*DGeography)
+				return NewDString(g.JSON), nil
+			},
+		},
+	},
+
+	"st_geogfromgeojson": {
+		Builtin{
+			Types:      ArgTypes{TypeString},
+			ReturnType: TypeGeography,
+			fn: func(ctx *EvalContext, args DTuple) (Datum, error) {
+				s := args[0].(*DString)
+				return ParseDGeography(string(*s))
+			},
+		},
+	},
+
+	"st_distance": {
+		Builtin{
+			Types:      ArgTypes{TypeGeography, TypeGeography},
+			ReturnType: TypeFloat,
+			fn: func(ctx *EvalContext, args DTuple) (Datum, error) {
+				g1 := args[0].(*DGeography)
+				g2 := args[1].(*DGeography)
+				p1 := g1.point
+				p2 := g2.point
+				if p1 == nil || p2 == nil {
+					return nil, fmt.Errorf("expected 2 points")
+				}
+				dist := p1.Distance(*p2)
+				return NewDFloat(DFloat(dist)), nil
+			},
+		},
+	},
+
 	// Math functions
 
 	"abs": {

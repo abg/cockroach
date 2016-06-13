@@ -111,6 +111,9 @@ func typeForDatum(d parser.Datum) pgType {
 	case *parser.DInterval:
 		return pgType{oid.T_interval, 8}
 
+	case *parser.DGeography:
+		return pgType{oid.T_text, -1}
+
 	default:
 		panic(fmt.Sprintf("unsupported type %T", d))
 	}
@@ -184,6 +187,9 @@ func (b *writeBuffer) writeTextDatum(d parser.Datum, sessionLoc *time.Location) 
 
 	case *parser.DInterval:
 		b.writeLengthPrefixedString(v.String())
+
+	case *parser.DGeography:
+		b.writeLengthPrefixedString(v.JSON)
 
 	default:
 		b.setError(errors.Errorf("unsupported type %T", d))
@@ -301,6 +307,9 @@ func (b *writeBuffer) writeBinaryDatum(d parser.Datum) {
 
 	case *parser.DString:
 		b.writeLengthPrefixedString(string(*v))
+
+	case *parser.DGeography:
+		b.writeLengthPrefixedString(v.JSON)
 
 	default:
 		b.setError(errors.Errorf("unsupported type %T", d))

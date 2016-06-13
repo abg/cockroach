@@ -562,7 +562,7 @@ func (u *sqlSymUnion) interleave() *InterleaveDef {
 %token <str>   FALSE FAMILY FETCH FILTER FIRST FLOAT FLOORDIV FOLLOWING FOR
 %token <str>   FORCE_INDEX FOREIGN FROM FULL
 
-%token <str>   GRANT GRANTS GREATEST GROUP GROUPING
+%token <str>   GEOGRAPHY GRANT GRANTS GREATEST GROUP GROUPING
 
 %token <str>   HAVING HIGH HOUR
 
@@ -2850,6 +2850,10 @@ simple_typename:
   {
     $$.val = intColTypeBigSerial
   }
+| GEOGRAPHY
+  {
+    $$.val = geographyColTypeGeography
+  }
 
 // We have a separate const_typename to allow defaulting fixed-length types
 // such as CHAR() and BIT() to an unspecified length. SQL9x requires that these
@@ -4499,6 +4503,7 @@ col_name_keyword:
 | EXISTS
 | EXTRACT
 | FLOAT
+| GEOGRAPHY
 | GREATEST
 | GROUPING
 | IF

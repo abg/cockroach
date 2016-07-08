@@ -804,6 +804,8 @@ func upperBoundColumnValueEncodedSize(col ColumnDescriptor) (int, bool) {
 		typ, size = encoding.Bytes, int(col.Type.Width)
 	case ColumnType_DECIMAL:
 		typ, size = encoding.Decimal, int(col.Type.Precision)
+	case ColumnType_GEOGRAPHY:
+		typ, size = encoding.Bytes, int(col.Type.Width)
 	default:
 		panic(errors.Errorf("unknown column type: %s", col.Type.Kind))
 	}

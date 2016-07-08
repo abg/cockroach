@@ -1077,10 +1077,9 @@ func (d *DInterval) Format(buf *bytes.Buffer, f FmtFlags) {
 
 // DGeography is the geography Datum.
 type DGeography struct {
-	JSON string
-	g    geom.T
-
-	point *s2.Point
+	JSON   string
+	Point  *s2.Point
+	CellID s2.CellID
 }
 
 func ParseDGeography(s string) (*DGeography, error) {
@@ -1096,7 +1095,6 @@ func ParseDGeography(s string) (*DGeography, error) {
 	}
 	d := DGeography{
 		JSON: string(b),
-		g:    g,
 	}
 
 	switch g := g.(type) {
@@ -1107,12 +1105,19 @@ func ParseDGeography(s string) (*DGeography, error) {
 		}
 		ll := s2.LatLngFromDegrees(c[0], c[1])
 		p := s2.PointFromLatLng(ll)
-		d.point = &p
+		d.Point = &p
+		d.CellID = s2.CellIDFromLatLng(ll)
 	default:
 		// TODO(mjibson): don't use package type name in error
 		return nil, fmt.Errorf("cannot use %T as a geography", g)
 	}
 	return &d, nil
+}
+
+func NewDGeographyFromCellID(id s2.CellID) *DGeography {
+	return &DGeography{
+		CellID: id,
+	}
 }
 
 // ReturnType implements the TypedExpr interface.
@@ -1138,37 +1143,41 @@ func (d *DGeography) Compare(other Datum) int {
 
 // HasPrev implements the Datum interface.
 func (*DGeography) HasPrev() bool {
-	return false
+	return true
 }
 
 // Prev implements the Datum interface.
 func (d *DGeography) Prev() Datum {
-	panic(d.Type() + ".Prev() not supported")
+	return NewDGeographyFromCellID(d.CellID.Prev())
 }
 
 // HasNext implements the Datum interface.
-func (*DGeography) HasNext() bool {
-	return false
+func (d *DGeography) HasNext() bool {
+	return true
 }
 
 // Next implements the Datum interface.
 func (d *DGeography) Next() Datum {
-	panic(d.Type() + ".Next() not supported")
+	return NewDGeographyFromCellID(d.CellID.Next())
 }
 
 // IsMax implements the Datum interface.
-func (*DGeography) IsMax() bool {
-	return false
+func (d *DGeography) IsMax() bool {
+	return d.CellID.ChildEnd() == d.CellID
 }
 
 // IsMin implements the Datum interface.
 func (d *DGeography) IsMin() bool {
-	return false
+	return d.CellID.ChildBegin() == d.CellID
 }
 
 // Format implements the NodeFormatter interface.
 func (d *DGeography) Format(buf *bytes.Buffer, f FmtFlags) {
-	encodeSQLString(buf, d.JSON)
+	if d.JSON != "" {
+		encodeSQLString(buf, d.JSON)
+	} else {
+		buf.WriteString(d.CellID.String())
+	}
 }
 
 // DTuple is the tuple Datum.

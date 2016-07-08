@@ -22,6 +22,7 @@ import (
 	"crypto/sha1"
 	"crypto/sha256"
 	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -736,12 +737,15 @@ var Builtins = map[string][]Builtin{
 			fn: func(ctx *EvalContext, args DTuple) (Datum, error) {
 				g1 := args[0].(*DGeography)
 				g2 := args[1].(*DGeography)
-				p1 := g1.point
-				p2 := g2.point
+				b, _ := json.MarshalIndent(g1, "", "  ")
+				fmt.Println("G1", string(b))
+				p1 := g1.Point
+				p2 := g2.Point
 				if p1 == nil || p2 == nil {
 					return nil, fmt.Errorf("expected 2 points")
 				}
 				dist := p1.Distance(*p2)
+				fmt.Println("DIST", p1, p2, dist)
 				return NewDFloat(DFloat(dist)), nil
 			},
 		},

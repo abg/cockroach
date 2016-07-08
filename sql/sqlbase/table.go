@@ -18,6 +18,7 @@ package sqlbase
 
 import (
 	"fmt"
+	"runtime/debug"
 	"time"
 	"unicode/utf8"
 
@@ -31,6 +32,7 @@ import (
 	"github.com/cockroachdb/cockroach/util/decimal"
 	"github.com/cockroachdb/cockroach/util/duration"
 	"github.com/cockroachdb/cockroach/util/encoding"
+	"github.com/golang/geo/s2"
 	"github.com/pkg/errors"
 )
 
@@ -491,6 +493,14 @@ func EncodeTableKey(b []byte, val parser.Datum, dir encoding.Direction) ([]byte,
 			return encoding.EncodeDurationAscending(b, t.Duration)
 		}
 		return encoding.EncodeDurationDescending(b, t.Duration)
+	case *parser.DGeography:
+		// TODO(mjibson): keep cellid as a uint64. It is converted to an int64
+		// because util/encoding.PeekType can't handle uints.
+		cellid := int64(t.CellID)
+		if dir == encoding.Ascending {
+			return encoding.EncodeVarintAscending(b, cellid), nil
+		}
+		return encoding.EncodeVarintDescending(b, cellid), nil
 	case *parser.DTuple:
 		for _, datum := range *t {
 			var err error
@@ -930,6 +940,17 @@ func DecodeTableKey(
 			rkey, d, err = encoding.DecodeDurationDescending(key)
 		}
 		return a.NewDInterval(parser.DInterval{Duration: d}), rkey, err
+	case *parser.DGeography:
+		// TODO(mjibson): EncodeTableKey currently encodes as an int64, should be uint64.
+		var i int64
+		if dir == encoding.Ascending {
+			rkey, i, err = encoding.DecodeVarintAscending(key)
+		} else {
+			rkey, i, err = encoding.DecodeVarintDescending(key)
+		}
+		debug.PrintStack()
+		// TODO(mjibson): make a.NewDGeography
+		return parser.NewDGeographyFromCellID(s2.CellID(i)), rkey, err
 	default:
 		return nil, nil, errors.Errorf("TODO(pmattis): decoded index key: %s", valType.Type())
 	}
@@ -990,6 +1011,7 @@ func DecodeTableValue(a *DatumAlloc, valType parser.Datum, b []byte) (parser.Dat
 		b, d, err = encoding.DecodeDurationValue(b)
 		return a.NewDInterval(parser.DInterval{Duration: d}), b, err
 	default:
+		panic("hi")
 		return nil, nil, errors.Errorf("TODO(pmattis): decoded index value: %s", valType.Type())
 	}
 }

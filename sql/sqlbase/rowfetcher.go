@@ -323,6 +323,8 @@ func (rf *RowFetcher) ProcessKV(kv client.KeyValue, debugStrings bool) (
 		prettyValue = parser.DNull.String()
 	}
 
+	fmt.Println("ProcessKV return", prettyKey, "V", prettyValue)
+
 	return prettyKey, prettyValue, nil
 }
 

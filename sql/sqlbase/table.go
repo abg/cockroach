@@ -19,6 +19,7 @@ package sqlbase
 import (
 	"fmt"
 	"runtime/debug"
+	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -948,13 +949,16 @@ func DecodeTableKey(
 		} else {
 			rkey, i, err = encoding.DecodeVarintDescending(key)
 		}
-		debug.PrintStack()
 		// TODO(mjibson): make a.NewDGeography
+		once.Do(debug.PrintStack)
+		return nil, rkey, err
 		return parser.NewDGeographyFromCellID(s2.CellID(i)), rkey, err
 	default:
 		return nil, nil, errors.Errorf("TODO(pmattis): decoded index key: %s", valType.Type())
 	}
 }
+
+var once sync.Once
 
 // DecodeTableValue decodes a value encoded by EncodeTableValue.
 func DecodeTableValue(a *DatumAlloc, valType parser.Datum, b []byte) (parser.Datum, []byte, error) {

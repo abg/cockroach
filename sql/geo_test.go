@@ -28,9 +28,9 @@ func TestGeoNoIndex(t *testing.T) {
 
 	rnd := rand.New(rand.NewSource(0))
 
-	for j := 0; j < 1000; j++ {
+	for j := 0; j < 1; j++ {
 		buf := bytes.NewBufferString("INSERT INTO t VALUES\n")
-		for i := 0; i < 100; i++ {
+		for i := 0; i < 1; i++ {
 			lat := rnd.Float64()*180 - 90
 			lng := rnd.Float64()*180 - 90
 			if i > 0 {
@@ -44,28 +44,37 @@ func TestGeoNoIndex(t *testing.T) {
 	}
 
 	var count int
-	if err := sqlDB.QueryRow("SELECT COUNT(*) FROM t").Scan(&count); err != nil {
-		t.Fatal(err)
-	}
-	fmt.Println("COUNT", count)
+	/*
+		if err := sqlDB.QueryRow("SELECT COUNT(*) FROM t").Scan(&count); err != nil {
+			t.Fatal(err)
+		}
+		fmt.Println("COUNT", count)
+		//*/
 
 	lat := rnd.Float64()*180 - 90
 	lng := rnd.Float64()*180 - 90
 	pt := fmt.Sprintf(`'{"type":"Point","coordinates":[%v, %v]}'`, lat, lng)
-	q := fmt.Sprintf(`SELECT COUNT(*) FROM t WHERE ST_DISTANCE(g, %s) < 1`, pt)
-	var e1, e2, e3 string
-	if err := sqlDB.QueryRow("explain "+q).Scan(&e1, &e2, &e3); err != nil {
-		t.Fatal(err)
-	}
-	fmt.Println("EXPLAIN", e1, e2, e3)
+	q := fmt.Sprintf(`SELECT COUNT(*) FROM t WHERE ST_DISTANCE(g, %s) < 4`, pt)
+	/*
+		var e1, e2, e3 string
+		if err := sqlDB.QueryRow("explain "+q).Scan(&e1, &e2, &e3); err != nil {
+			t.Fatal(err)
+		}
+		fmt.Println("EXPLAIN", e1, e2, e3)
+	*/
 	fmt.Println(q)
 	start := time.Now()
+	fmt.Println("BEFORE")
 	if err := sqlDB.QueryRow(q).Scan(&count); err != nil {
 		t.Fatal(err)
 	}
+	fmt.Println("AFTER")
 	end := time.Since(start)
 	fmt.Println("DUR", end)
 	fmt.Println("RESULT COUNT", count)
+	if count == 0 {
+		t.Fatalf("count == 0")
+	}
 	/*
 		if err != nil {
 			t.Fatal(err)
@@ -84,5 +93,5 @@ func TestGeoNoIndex(t *testing.T) {
 		if err := rows.Err(); err != nil {
 			t.Fatal(err)
 		}
-	*/
+	//*/
 }

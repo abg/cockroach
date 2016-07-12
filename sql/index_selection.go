@@ -536,9 +536,6 @@ func (v *indexInfo) makeIndexConstraints(andExprs parser.TypedExprs) (indexConst
 					if !isGeoFunc(c.Left) {
 						return false
 					}
-					defer func() {
-						fmt.Println("GEODONE", done, e)
-					}()
 					done = true
 					f := c.Left.(*parser.FuncExpr)
 					dist := c.Right.(*parser.DFloat)
@@ -794,10 +791,6 @@ func (v *indexInfo) makeIndexConstraints(andExprs parser.TypedExprs) (indexConst
 			// the start key prefix nor the end key prefix.
 			break
 		}
-	}
-	fmt.Println("CCC", andExprs)
-	for i, c := range constraints {
-		fmt.Println(i, c)
 	}
 	return constraints, nil
 }

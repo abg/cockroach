@@ -199,6 +199,7 @@ func (n *scanNode) Next() (bool, error) {
 		if err != nil || n.row == nil {
 			return false, err
 		}
+		fmt.Println("SCAN NEXT", n.row)
 		passesFilter, err := sqlbase.RunFilter(n.filter, &n.p.evalCtx)
 		if err != nil {
 			return false, err
